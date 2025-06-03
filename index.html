@@ -340,18 +340,34 @@
           });
 
           if (!response.ok) {
-            const errorData = await response.json();
-            console.error('API応答エラー:', errorData);
-            throw new Error(`API応答エラー: ${response.status}`);
+            throw new Error(`APIレスポンスエラー: ${response.status}`);
           }
 
           const data = await response.json();
-          const zenResponse = data.candidates[0].content.parts[0].text;
+          console.log('受信したデータ:', data);
           
-          // ローディングを非表示
-          loading.classList.remove('visible');
+          // レスポンスの解析
+          let zenResponse;
           
-          // 結果の表示
+          if (data.error) {
+            // エラーメッセージ
+            throw new Error(`API応答エラー: ${data.error}`);
+          } else if (data.candidates && Array.isArray(data.candidates) && data.candidates.length > 0) {
+            // Gemini APIからのレスポンス形式
+            const candidate = data.candidates[0];
+            if (candidate.content && candidate.content.parts && Array.isArray(candidate.content.parts) && candidate.content.parts.length > 0) {
+              zenResponse = candidate.content.parts[0].text;
+            } else {
+              console.error('予期しない候補形式:', candidate);
+              throw new Error('予期しない候補形式');
+            }
+          } else {
+            // 予期しないレスポンス形式
+            console.error('予期しないレスポンス形式:', data);
+            throw new Error('予期しないレスポンス形式');
+          }
+          
+          // 結果を表示
           displayResult(zenResponse);
           
         } catch (error) {

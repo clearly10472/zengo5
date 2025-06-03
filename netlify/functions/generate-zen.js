@@ -178,41 +178,22 @@ exports.handler = async function(event, context) {
       
       if (!data) {
         console.error('No data in response');
-        return { statusCode: 200, body: JSON.stringify({ zenResponse: defaultResponse }) };
+        return { statusCode: 200, body: JSON.stringify({ error: 'No data in response' }) };
       }
       
-      // 様々なレスポンス形式に対応
-      if (data.candidates && Array.isArray(data.candidates) && data.candidates.length > 0) {
-        const candidate = data.candidates[0];
-        console.log('Found candidate:', JSON.stringify(candidate));
-        
-        if (candidate.content && candidate.content.parts && Array.isArray(candidate.content.parts) && candidate.content.parts.length > 0) {
-          zenResponse = candidate.content.parts[0].text || defaultResponse;
-        } else if (candidate.text) {
-          zenResponse = candidate.text;
-        } else if (candidate.content && typeof candidate.content === 'string') {
-          zenResponse = candidate.content;
-        } else {
-          console.log('Candidate structure not recognized, using default response');
-        }
-      } else if (data.text) {
-        zenResponse = data.text;
-      } else if (data.content) {
-        zenResponse = data.content;
-      } else {
-        console.log('Response structure not recognized, using default response');
-      }
+      // APIからのレスポンスをそのまま返す
+      return {
+        statusCode: 200,
+        body: JSON.stringify(data)
+      };
+      
     } catch (error) {
-      console.error('Error extracting response:', error);
-      // エラーが発生してもデフォルトレスポンスを返す
-      zenResponse = defaultResponse;
+      console.error('Error processing response:', error);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: `Error processing response: ${error.message}` })
+      };
     }
-
-    // Return the successful response
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ response: zenResponse })
-    };
     
   } catch (error) {
     console.error('Error generating Zen response:', error);
