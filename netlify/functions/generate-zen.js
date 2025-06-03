@@ -52,7 +52,7 @@ exports.handler = async function(event, context) {
 【気分】：${mood}`;
 
     // Call the Gemini API
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key=${apiKey}`;
     
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -73,8 +73,27 @@ exports.handler = async function(event, context) {
           temperature: 0.7,
           topK: 40,
           topP: 0.95,
-          maxOutputTokens: 1024
-        }
+          maxOutputTokens: 1024,
+          stopSequences: []
+        },
+        safetySettings: [
+          {
+            category: "HARM_CATEGORY_HARASSMENT",
+            threshold: "BLOCK_NONE"
+          },
+          {
+            category: "HARM_CATEGORY_HATE_SPEECH",
+            threshold: "BLOCK_NONE"
+          },
+          {
+            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            threshold: "BLOCK_NONE"
+          },
+          {
+            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+            threshold: "BLOCK_NONE"
+          }
+        ]
       })
     });
 
@@ -88,7 +107,20 @@ exports.handler = async function(event, context) {
     }
 
     const data = await response.json();
-    const zenResponse = data.candidates[0].content.parts[0].text;
+    console.log('Gemini API response:', JSON.stringify(data));
+    
+    // レスポンス形式に応じて適切に処理
+    let zenResponse;
+    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+      zenResponse = data.candidates[0].content.parts[0].text;
+    } else if (data.candidates && data.candidates[0] && data.candidates[0].text) {
+      zenResponse = data.candidates[0].text;
+    } else if (data.text) {
+      zenResponse = data.text;
+    } else {
+      console.error('Unexpected API response format:', data);
+      throw new Error('Unexpected API response format');
+    }
 
     // Return the successful response
     return {
