@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZenMood - 今日の気分に合わせた禅語</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* ZenMood スタイルシート */
+    :root {
+      --primary-color: #2c3e50;
+      --accent-color: #34495e;
+      --light-color: #ecf0f1;
+      --dark-color: #2c3e50;
+      --error-color: #e74c3c;
+      --success-color: #27ae60;
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background-color: #f5f5f5;
+      color: var(--dark-color);
+      line-height: 1.6;
+      background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="white" /><circle cx="50" cy="50" r="40" stroke="%23f0f0f0" stroke-width="2" fill="none" /></svg>');
+      background-size: 300px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    h1 {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 2.5rem;
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+      letter-spacing: 2px;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      color: #666;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .input-section {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--primary-color);
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 2px rgba(52, 73, 94, 0.2);
+    }
+
+    button {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: var(--transition);
+      font-weight: 500;
+    }
+
+    button:hover {
+      background-color: var(--accent-color);
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .result-section {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: none;
+    }
+
+    .result-section.visible {
+      display: block;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .loading {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .loading.visible {
+      display: flex;
+    }
+
+    .zen-circle {
+      width: 60px;
+      height: 60px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid var(--primary-color);
+      border-radius: 50%;
+      animation: spin 2s linear infinite;
+      margin-bottom: 1rem;
+    }
+
+    .result-content {
+      display: none;
+    }
+
+    .result-content.visible {
+      display: block;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .zen-result {
+      background-color: #f9f9f9;
+      padding: 1.5rem;
+      border-radius: 6px;
+      border-left: 4px solid var(--primary-color);
+    }
+
+    .zen-word {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 2rem;
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .zen-reading {
+      font-size: 1rem;
+      color: #666;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .zen-meaning, .zen-reason {
+      margin-bottom: 1rem;
+      line-height: 1.8;
+    }
+
+    .zen-reason {
+      font-style: italic;
+      color: #555;
+    }
+
+    .error-message {
+      color: var(--error-color);
+      background-color: #fde8e8;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-top: 1rem;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e0e0e0;
+      color: #888;
+      font-size: 0.9rem;
+    }
+
+    .api-key-section {
+      margin-bottom: 1.5rem;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* レスポンシブデザイン */
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .input-section, .result-section {
+        padding: 1.5rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.8rem;
+      }
+      
+      .zen-word {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>ZenMood</h1>
+      <p class="subtitle">今日の気分に合わせた禅語を提案します</p>
+    </header>
+
+    <main>
+      <div class="input-section">
+        <form id="mood-form">
+          <div class="api-key-section">
+            <label for="api-key">Gemini API キー</label>
+            <input type="text" id="api-key" placeholder="APIキーを入力してください" required>
+            <small>※APIキーはブラウザのローカルストレージに保存され、サーバーには送信されません</small>
+          </div>
+          <div class="form-group">
+            <label for="mood-input">今日の気分を入力してください</label>
+            <input type="text" id="mood-input" placeholder="例：落ち込んでいる／イライラする／ワクワクする" required>
+          </div>
+          <button type="submit" id="submit-btn">禅語を探す</button>
+        </form>
+      </div>
+
+      <div class="result-section" id="result-section">
+        <div class="loading" id="loading">
+          <div class="zen-circle"></div>
+          <p>禅の知恵を探しています...</p>
+        </div>
+        
+        <div class="result-content" id="result-content">
+          <!-- 結果がここに表示されます -->
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p>© 2025 ZenMood - 禅の知恵で心を整える</p>
+    </footer>
+  </div>
+
+  <script>
+    // ZenMood フロントエンドスクリプト
+    document.addEventListener('DOMContentLoaded', function() {
+      // 要素の取得
+      const moodForm = document.getElementById('mood-form');
+      const apiKeyInput = document.getElementById('api-key');
+      const moodInput = document.getElementById('mood-input');
+      const submitBtn = document.getElementById('submit-btn');
+      const resultSection = document.getElementById('result-section');
+      const loading = document.getElementById('loading');
+      const resultContent = document.getElementById('result-content');
+
+      // ローカルストレージからAPIキーを取得
+      const savedApiKey = localStorage.getItem('gemini_api_key');
+      if (savedApiKey) {
+        apiKeyInput.value = savedApiKey;
+      }
+
+      // 設定データ
+      const config = {
+        prompt: "あなたは、禅の思想に詳しい賢いAIです。\n\n以下に与えられる「今日の気分」をもとに、それに最もふさわしい禅語を1つ選び、以下の情報を出力してください：\n\n1. 禅語（漢字）\n2. 読み方（ひらがな）\n3. 意味・背景（簡潔に3行以内）\n4. なぜこの気分にふさわしいのか（1〜2行）\n\n例：\n【気分】心がざわざわする、不安な気持ち\n\n→ 出力形式：\n---\n禅語：喫茶去  \nよみ：きっさこ  \n意味：どんなときも一度お茶を飲んで落ち着こう、という意味。客人が誰であっても平等にもてなすという禅の精神が込められている。  \n理由：不安で心がざわついているとき、まず一呼吸して心を静めることが大切だから。\n---\n\n【気分】：{{気分}}"
+      };
+
+      // フォーム送信イベントの処理
+      moodForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const apiKey = apiKeyInput.value.trim();
+        const mood = moodInput.value.trim();
+        
+        if (!apiKey) {
+          alert('Gemini APIキーを入力してください');
+          return;
+        }
+        
+        if (!mood) {
+          alert('気分を入力してください');
+          return;
+        }
+
+        // APIキーをローカルストレージに保存
+        localStorage.setItem('gemini_api_key', apiKey);
+
+        // 送信ボタンを無効化
+        submitBtn.disabled = true;
+        submitBtn.textContent = '処理中...';
+        
+        // 結果セクションを表示し、ローディングを表示
+        resultSection.style.display = 'block';
+        resultSection.classList.add('visible');
+        loading.classList.add('visible');
+        resultContent.classList.remove('visible');
+        resultContent.style.display = 'none';
+        
+        try {
+          // Gemini APIのURL
+          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+          
+          // プロンプトの作成
+          const prompt = config.prompt.replace('{{気分}}', mood);
+          
+          // APIリクエストの送信
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    {
+                      text: prompt
+                    }
+                  ]
+                }
+              ],
+              generationConfig: {
+                temperature: 0.7,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 1024
+              }
+            })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('API応答エラー:', errorData);
+            throw new Error(`API応答エラー: ${response.status}`);
+          }
+
+          const data = await response.json();
+          const zenResponse = data.candidates[0].content.parts[0].text;
+          
+          // ローディングを非表示
+          loading.classList.remove('visible');
+          
+          // 結果の表示
+          displayResult(zenResponse);
+          
+        } catch (error) {
+          console.error('エラーが発生しました:', error);
+          
+          // ローディングを非表示
+          loading.classList.remove('visible');
+          
+          // エラーメッセージの表示
+          resultContent.innerHTML = `
+            <div class="error-message">
+              <p>申し訳ありません。エラーが発生しました。</p>
+              <p>APIキーが正しいか確認してください。</p>
+              <p>エラー詳細: ${error.message}</p>
+            </div>
+          `;
+          resultContent.style.display = 'block';
+          resultContent.classList.add('visible');
+          
+        } finally {
+          // 送信ボタンを再度有効化
+          submitBtn.disabled = false;
+          submitBtn.textContent = '禅語を探す';
+        }
+      });
+
+      // 結果の表示関数
+      function displayResult(response) {
+        // 禅語の抽出
+        const lines = response.split('\n');
+        let zenWord = '';
+        let zenReading = '';
+        let zenMeaning = '';
+        let zenReason = '';
+        
+        for (const line of lines) {
+          if (line.startsWith('禅語：')) {
+            zenWord = line.replace('禅語：', '').trim();
+          } else if (line.startsWith('よみ：')) {
+            zenReading = line.replace('よみ：', '').trim();
+          } else if (line.startsWith('意味：')) {
+            zenMeaning = line.replace('意味：', '').trim();
+          } else if (line.startsWith('理由：')) {
+            zenReason = line.replace('理由：', '').trim();
+          }
+        }
+        
+        // 結果のHTMLを構築
+        resultContent.innerHTML = `
+          <div class="zen-result">
+            <div class="zen-word">${zenWord}</div>
+            <div class="zen-reading">${zenReading}</div>
+            <div class="zen-meaning"><strong>意味：</strong>${zenMeaning}</div>
+            <div class="zen-reason"><strong>理由：</strong>${zenReason}</div>
+          </div>
+        `;
+        
+        // 結果を表示
+        resultContent.style.display = 'block';
+        resultContent.classList.add('visible');
+        
+        // スムーズスクロール
+        resultSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  </script>
+</body>
+</html>
