@@ -367,16 +367,16 @@
             throw new Error('予期しないレスポンス形式');
           }
           
+          // ローディングを非表示
+          loading.classList.remove('visible');
+          
           // 結果を表示
           displayResult(zenResponse);
           
         } catch (error) {
-          console.error('エラーが発生しました:', error);
-          
+          console.error('エラー:', error);
           // ローディングを非表示
           loading.classList.remove('visible');
-          
-          // エラーメッセージの表示
           resultContent.innerHTML = `
             <div class="error-message">
               <p>申し訳ありません。エラーが発生しました。</p>
