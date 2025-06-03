@@ -134,11 +134,31 @@ exports.handler = async function(event, context) {
       };
     }
 
-    const data = await response.json();
-    console.log('Gemini API response:', JSON.stringify(data));
+    // レスポンスの解析を安全に行う
+    let data;
+    try {
+      const responseText = await response.text();
+      console.log('Raw API response:', responseText);
+      
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Failed to parse response as JSON:', parseError);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ error: `Invalid JSON response from API: ${parseError.message}` })
+        };
+      }
+    } catch (error) {
+      console.error('Error reading response:', error);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: `Error reading API response: ${error.message}` })
+      };
+    }
     
     // エラーチェック
-    if (data.error) {
+    if (data && data.error) {
       console.error('API returned an error:', data.error);
       return {
         statusCode: 500,
@@ -146,36 +166,46 @@ exports.handler = async function(event, context) {
       };
     }
     
+    // デフォルトのレスポンス
+    const defaultResponse = '申し訳ありません。禅語を生成できませんでした。別の気分で試してみてください。';
+    
     // レスポンス形式に応じて適切に処理
-    let zenResponse = '';
+    let zenResponse = defaultResponse;
     
     try {
-      if (data.candidates && data.candidates.length > 0) {
+      // レスポンスの構造を確認
+      console.log('Response structure:', JSON.stringify(data, null, 2));
+      
+      if (!data) {
+        console.error('No data in response');
+        return { statusCode: 200, body: JSON.stringify({ zenResponse: defaultResponse }) };
+      }
+      
+      // 様々なレスポンス形式に対応
+      if (data.candidates && Array.isArray(data.candidates) && data.candidates.length > 0) {
         const candidate = data.candidates[0];
+        console.log('Found candidate:', JSON.stringify(candidate));
         
-        if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
-          zenResponse = candidate.content.parts[0].text;
+        if (candidate.content && candidate.content.parts && Array.isArray(candidate.content.parts) && candidate.content.parts.length > 0) {
+          zenResponse = candidate.content.parts[0].text || defaultResponse;
         } else if (candidate.text) {
           zenResponse = candidate.text;
         } else if (candidate.content && typeof candidate.content === 'string') {
           zenResponse = candidate.content;
+        } else {
+          console.log('Candidate structure not recognized, using default response');
         }
       } else if (data.text) {
         zenResponse = data.text;
       } else if (data.content) {
         zenResponse = data.content;
-      }
-      
-      if (!zenResponse) {
-        console.error('Could not extract response from API result:', data);
-        zenResponse = '申し訳ありません。禅語を生成できませんでした。別の気分で試してみてください。';
+      } else {
+        console.log('Response structure not recognized, using default response');
       }
     } catch (error) {
-      console.error('Error parsing API response:', error);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: `Error parsing API response: ${error.message}` })
-      };
+      console.error('Error extracting response:', error);
+      // エラーが発生してもデフォルトレスポンスを返す
+      zenResponse = defaultResponse;
     }
 
     // Return the successful response
