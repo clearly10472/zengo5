@@ -34,13 +34,24 @@ exports.handler = async function(event, context) {
 
     // Get API key from environment variables
     const apiKey = process.env.GEMINI_API_KEY;
-    
     if (!apiKey) {
+      console.error('API key not configured in environment variables');
       return {
         statusCode: 500,
         body: JSON.stringify({ error: "API key not configured" })
       };
     }
+    
+    // APIキーの形式を確認（基本的な検証）
+    if (apiKey.length < 10) {
+      console.error('API key appears to be invalid (too short)');
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "API key appears to be invalid" })
+      };
+    }
+    
+    console.log('Using API key (first 4 chars):', apiKey.substring(0, 4) + '...');
     
     // 利用可能なモデルを確認
     try {
@@ -77,12 +88,9 @@ exports.handler = async function(event, context) {
     // Call the Gemini API with gemini-1.5-pro model
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
     
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
+    let response;
+    try {
+      const requestBody = {
         contents: [
           {
             parts: [
@@ -96,53 +104,78 @@ exports.handler = async function(event, context) {
           temperature: 0.7,
           topK: 40,
           topP: 0.95,
-          maxOutputTokens: 1024,
-          stopSequences: []
+          maxOutputTokens: 1024
+        }
+      };
+      
+      console.log('Sending request to Gemini API:', JSON.stringify(requestBody));
+      
+      response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
         },
-        safetySettings: [
-          {
-            category: "HARM_CATEGORY_HARASSMENT",
-            threshold: "BLOCK_NONE"
-          },
-          {
-            category: "HARM_CATEGORY_HATE_SPEECH",
-            threshold: "BLOCK_NONE"
-          },
-          {
-            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-            threshold: "BLOCK_NONE"
-          },
-          {
-            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-            threshold: "BLOCK_NONE"
-          }
-        ]
-      })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('API response error:', errorData);
+        body: JSON.stringify(requestBody)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`API request failed with status ${response.status}: ${errorText}`);
+        return {
+          statusCode: response.status,
+          body: JSON.stringify({ error: `API request failed: ${response.statusText}` })
+        };
+      }
+    } catch (error) {
+      console.error('Error calling Gemini API:', error);
       return {
-        statusCode: response.status,
-        body: JSON.stringify({ error: `API response error: ${response.status}` })
+        statusCode: 500,
+        body: JSON.stringify({ error: `Error calling Gemini API: ${error.message}` })
       };
     }
 
     const data = await response.json();
     console.log('Gemini API response:', JSON.stringify(data));
     
+    // エラーチェック
+    if (data.error) {
+      console.error('API returned an error:', data.error);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: `API error: ${data.error.message || 'Unknown error'}` })
+      };
+    }
+    
     // レスポンス形式に応じて適切に処理
-    let zenResponse;
-    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
-      zenResponse = data.candidates[0].content.parts[0].text;
-    } else if (data.candidates && data.candidates[0] && data.candidates[0].text) {
-      zenResponse = data.candidates[0].text;
-    } else if (data.text) {
-      zenResponse = data.text;
-    } else {
-      console.error('Unexpected API response format:', data);
-      throw new Error('Unexpected API response format');
+    let zenResponse = '';
+    
+    try {
+      if (data.candidates && data.candidates.length > 0) {
+        const candidate = data.candidates[0];
+        
+        if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
+          zenResponse = candidate.content.parts[0].text;
+        } else if (candidate.text) {
+          zenResponse = candidate.text;
+        } else if (candidate.content && typeof candidate.content === 'string') {
+          zenResponse = candidate.content;
+        }
+      } else if (data.text) {
+        zenResponse = data.text;
+      } else if (data.content) {
+        zenResponse = data.content;
+      }
+      
+      if (!zenResponse) {
+        console.error('Could not extract response from API result:', data);
+        zenResponse = '申し訳ありません。禅語を生成できませんでした。別の気分で試してみてください。';
+      }
+    } catch (error) {
+      console.error('Error parsing API response:', error);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: `Error parsing API response: ${error.message}` })
+      };
     }
 
     // Return the successful response
