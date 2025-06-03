@@ -1,5 +1,5 @@
 // Netlify Function to generate Zen phrases using Gemini API
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const fetch = require('node-fetch');
 
 exports.handler = async function(event, context) {
   // Only allow POST requests

@@ -330,6 +330,7 @@
         
         try {
           // Netlify Functionsを使用してAPIリクエストを送信
+          console.log('送信中の気分:', mood);
           const response = await fetch('/.netlify/functions/generate-zen', {
             method: 'POST',
             headers: {
