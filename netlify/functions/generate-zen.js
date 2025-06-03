@@ -1,6 +1,20 @@
 // Netlify Function to generate Zen phrases using Gemini API
 const fetch = require('node-fetch');
 
+// 利用可能なモデルを確認する関数
+async function listAvailableModels(apiKey) {
+  try {
+    const listModelsUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+    const response = await fetch(listModelsUrl);
+    const data = await response.json();
+    console.log('Available models:', JSON.stringify(data));
+    return data;
+  } catch (error) {
+    console.error('Error listing models:', error);
+    return { error: error.message };
+  }
+}
+
 exports.handler = async function(event, context) {
   // Only allow POST requests
   if (event.httpMethod !== "POST") {
@@ -27,6 +41,15 @@ exports.handler = async function(event, context) {
         body: JSON.stringify({ error: "API key not configured" })
       };
     }
+    
+    // 利用可能なモデルを確認
+    try {
+      const models = await listAvailableModels(apiKey);
+      console.log('Available models checked');
+    } catch (error) {
+      console.error('Error checking models:', error);
+      // モデル確認に失敗しても処理を続行
+    }
 
     // Construct the prompt
     const prompt = `あなたは、禅の思想に詳しい賢いAIです。
@@ -51,8 +74,8 @@ exports.handler = async function(event, context) {
 
 【気分】：${mood}`;
 
-    // Call the Gemini API
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key=${apiKey}`;
+    // Call the Gemini API - try with the standard model name
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
     
     const response = await fetch(apiUrl, {
       method: 'POST',
