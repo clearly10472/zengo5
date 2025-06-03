@@ -1,0 +1,9 @@
+{
+  "name": "zenmood-functions",
+  "version": "1.0.0",
+  "description": "Netlify Functions for ZenMood",
+  "main": "generate-zen.js",
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  }
+}

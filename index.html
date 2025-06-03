@@ -217,9 +217,7 @@
       font-size: 0.9rem;
     }
 
-    .api-key-section {
-      margin-bottom: 1.5rem;
-    }
+
 
     @keyframes fadeIn {
       from { opacity: 0; }
@@ -267,11 +265,6 @@
     <main>
       <div class="input-section">
         <form id="mood-form">
-          <div class="api-key-section">
-            <label for="api-key">Gemini API キー</label>
-            <input type="text" id="api-key" placeholder="APIキーを入力してください" required>
-            <small>※APIキーはブラウザのローカルストレージに保存され、サーバーには送信されません</small>
-          </div>
           <div class="form-group">
             <label for="mood-input">今日の気分を入力してください</label>
             <input type="text" id="mood-input" placeholder="例：落ち込んでいる／イライラする／ワクワクする" required>
@@ -302,18 +295,11 @@
     document.addEventListener('DOMContentLoaded', function() {
       // 要素の取得
       const moodForm = document.getElementById('mood-form');
-      const apiKeyInput = document.getElementById('api-key');
       const moodInput = document.getElementById('mood-input');
       const submitBtn = document.getElementById('submit-btn');
       const resultSection = document.getElementById('result-section');
       const loading = document.getElementById('loading');
       const resultContent = document.getElementById('result-content');
-
-      // ローカルストレージからAPIキーを取得
-      const savedApiKey = localStorage.getItem('gemini_api_key');
-      if (savedApiKey) {
-        apiKeyInput.value = savedApiKey;
-      }
 
       // 設定データ
       const config = {
@@ -324,21 +310,12 @@
       moodForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        const apiKey = apiKeyInput.value.trim();
         const mood = moodInput.value.trim();
-        
-        if (!apiKey) {
-          alert('Gemini APIキーを入力してください');
-          return;
-        }
         
         if (!mood) {
           alert('気分を入力してください');
           return;
         }
-
-        // APIキーをローカルストレージに保存
-        localStorage.setItem('gemini_api_key', apiKey);
 
         // 送信ボタンを無効化
         submitBtn.disabled = true;
@@ -352,35 +329,13 @@
         resultContent.style.display = 'none';
         
         try {
-          // Gemini APIのURL
-          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
-          
-          // プロンプトの作成
-          const prompt = config.prompt.replace('{{気分}}', mood);
-          
-          // APIリクエストの送信
-          const response = await fetch(apiUrl, {
+          // Netlify Functionsを使用してAPIリクエストを送信
+          const response = await fetch('/.netlify/functions/generate-zen', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [
-                    {
-                      text: prompt
-                    }
-                  ]
-                }
-              ],
-              generationConfig: {
-                temperature: 0.7,
-                topK: 40,
-                topP: 0.95,
-                maxOutputTokens: 1024
-              }
-            })
+            body: JSON.stringify({ mood })
           });
 
           if (!response.ok) {
