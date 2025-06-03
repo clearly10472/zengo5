@@ -74,8 +74,8 @@ exports.handler = async function(event, context) {
 
 【気分】：${mood}`;
 
-    // Call the Gemini API - try with the standard model name
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+    // Call the Gemini API with gemini-1.5-pro model
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
     
     const response = await fetch(apiUrl, {
       method: 'POST',
