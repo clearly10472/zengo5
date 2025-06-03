@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 // 利用可能なモデルを確認する関数
 async function listAvailableModels(apiKey) {
   try {
-    const listModelsUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+    const listModelsUrl = `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`;
     const response = await fetch(listModelsUrl);
     const data = await response.json();
     console.log('Available models:', JSON.stringify(data));
@@ -86,7 +86,7 @@ exports.handler = async function(event, context) {
 【気分】：${mood}`;
 
     // Call the Gemini API with gemini-1.5-pro model
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
     
     let response;
     try {
