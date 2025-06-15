@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ZenMood - 今日の気分に合わせた禅語</title>
+  <title>ゆるっと一服、今日の禅ことば - 今日の気分に合わせた禅語</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    /* ZenMood スタイルシート */
+    /* ゆるっと一服、今日の禅ことば スタイルシート */
     :root {
       --primary-color: #2c3e50;
       --accent-color: #34495e;
@@ -258,7 +258,7 @@
 <body>
   <div class="container">
     <header>
-      <h1>ZenMood</h1>
+      <h1>ゆるっと一服、今日の禅ことば</h1>
       <p class="subtitle">今日の気分に合わせた禅語を提案します</p>
     </header>
 
@@ -286,12 +286,12 @@
     </main>
 
     <footer>
-      <p>© 2025 ZenMood - 禅の知恵で心を整える</p>
+      <p>© 2025 ゆるっと一服、今日の禅ことば - 禅の知恵で心を整える</p>
     </footer>
   </div>
 
   <script>
-    // ZenMood フロントエンドスクリプト
+    // ゆるっと一服、今日の禅ことば フロントエンドスクリプト
     document.addEventListener('DOMContentLoaded', function() {
       // 要素の取得
       const moodForm = document.getElementById('mood-form');
@@ -370,8 +370,8 @@
           // ローディングを非表示
           loading.classList.remove('visible');
           
-          // 結果を表示
-          displayResult(zenResponse);
+          // 結果を表示 (メタデータ付き)
+          displayResult(zenResponse, data.metadata);
           
         } catch (error) {
           console.error('エラー:', error);
@@ -394,8 +394,15 @@
         }
       });
 
+      // レスポンスのメタデータを保存する変数
+      let lastResponseMetadata = null;
+      
       // 結果の表示関数
-      function displayResult(response) {
+      function displayResult(response, metadata = null) {
+        // メタデータを保存
+        lastResponseMetadata = metadata;
+        console.log('受信したメタデータ:', metadata);
+        
         // 禅語の抽出
         const lines = response.split('\n');
         let zenWord = '';
@@ -415,6 +422,24 @@
           }
         }
         
+        // メタデータの表示用HTML
+        let metadataHtml = '';
+        if (metadata) {
+          const randomFactors = metadata.randomFactors || {};
+          metadataHtml = `
+            <div class="metadata-info" style="font-size: 0.8rem; color: #999; margin-top: 1rem; border-top: 1px dashed #eee; padding-top: 0.5rem;">
+              <details>
+                <summary>生成情報</summary>
+                <div style="margin-top: 0.5rem; font-family: monospace;">
+                  生成時刻: ${new Date(metadata.generatedAt).toLocaleString()}<br>
+                  視点: ${randomFactors.element1 || '不明'}<br>
+                  アプローチ: ${randomFactors.element2 || '不明'}
+                </div>
+              </details>
+            </div>
+          `;
+        }
+        
         // 結果のHTMLを構築
         resultContent.innerHTML = `
           <div class="zen-result">
@@ -422,6 +447,18 @@
             <div class="zen-reading">${zenReading}</div>
             <div class="zen-meaning"><strong>意味：</strong>${zenMeaning}</div>
             <div class="zen-reason"><strong>理由：</strong>${zenReason}</div>
+            ${metadataHtml}
+          </div>
+          <div class="program-info" style="margin-top: 2rem; padding: 1rem; background-color: #f9f9f9; border-radius: 6px;">
+            <p>「聴くと心が軽くなる」ひとときをお届けする番組です 。忙しい毎日を送る中で、ふと立ち止まるきっかけになるよう、禅の言葉や茶の湯の精神をヒントにしたお話を発信しています 。禅を探求する鹿介（しかすけ）と、ちょっぴりお疲れ気味なうまっきーの二人が、日常の悩みやストレスに対する新しい考え方を、ゆるりとした雑談形式でお届けします 。</p>
+            <div class="social-links" style="margin-top: 1rem;">
+              <h4>【SNS・関連メディア情報】</h4>
+              <ul style="list-style-type: none; padding-left: 0;">
+                <li style="margin: 0.5rem 0;"><a href="https://www.youtube.com/@yuruzen" target="_blank" style="color: var(--primary-color);">YouTube</a></li>
+                <li style="margin: 0.5rem 0;"><a href="https://note.com/yuruzengo" target="_blank" style="color: var(--primary-color);">note</a></li>
+                <li style="margin: 0.5rem 0;"><a href="https://open.spotify.com/show/5o9J7kxafBzlTRMSKt2Lmb?si=QxB0FepqQcuRisJNL3hhug" target="_blank" style="color: var(--primary-color);">Spotify</a></li>
+              </ul>
+            </div>
           </div>
         `;
         
